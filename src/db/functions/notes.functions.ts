@@ -1,13 +1,9 @@
-import type { dbContext } from '../../middlewares/db.middleware';
-import { notesTable, usersTable } from '../schemas/user.schema';
-import {
-	notesRelation,
-	type notesTypeI,
-	type notesTypeS,
-} from '../schemas/notes.schema';
+import type { DbContext } from '../../middlewares/db.middleware';
+import { notesTable } from '../schemas/user.schema';
+import { type notesTypeI, type notesTypeS } from '../schemas/notes.schema';
 import { eq } from 'drizzle-orm';
 
-export async function insertNotes({
+export async function insertNote({
 	db,
 	userId,
 	note,
@@ -30,12 +26,12 @@ export async function getNotes({
 }
 
 interface InsertNotes {
-	db: dbContext;
+	db: DbContext;
 	userId: string;
 	note: notesTypeI;
 }
 
 interface GetNotes {
-	db: dbContext;
+	db: DbContext;
 	userId: string;
 }

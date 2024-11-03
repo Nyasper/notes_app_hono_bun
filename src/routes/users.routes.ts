@@ -1,7 +1,10 @@
 import { Hono } from 'hono';
+import { zValidator } from '@hono/zod-validator';
+import { userLoginDTO } from '../DTO/user/login.DTO';
+import { userRegisterDTO } from '../DTO/user/register.DTO';
 
 export const usersRouter = new Hono()
-	.post('/register', async (c) => {
+	.post('/register', zValidator('json', userRegisterDTO), async (c) => {
 		const { email, password } = await c.req.json();
 
 		if (!email || !password) {
@@ -18,7 +21,7 @@ export const usersRouter = new Hono()
 		return c.text('Usuario registrado exitosamente.', 201);
 	})
 
-	.post('/login', async (c) => {
+	.post('/login', zValidator('json', userLoginDTO), async (c) => {
 		try {
 			let { username, password } = await c.req.json();
 
