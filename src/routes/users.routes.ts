@@ -1,42 +1,34 @@
 import { Hono } from 'hono';
 import { zValidator } from '@hono/zod-validator';
-import { userLoginDTO } from '../DTO/user/login.DTO';
-import { userRegisterDTO } from '../DTO/user/register.DTO';
+import { UserLoginDTO, userLoginDTO } from '../DTO/user/login.DTO';
+import {
+	userRegisterDTO,
+	type UserRegisterDTO,
+} from '../DTO/user/register.DTO';
+import { loginUser, registerUser } from '../db/functions/users.function';
+import { useDB } from '../middlewares/db.middleware';
 
 export const usersRouter = new Hono()
-	.post('/register', zValidator('json', userRegisterDTO), async (c) => {
-		const { email, password } = await c.req.json();
+	.post(
+		'/register',
+		useDB,
+		zValidator('json', userRegisterDTO),
+		async ({ var: { db }, req, json }) => {
+			const user: UserRegisterDTO = await req.json();
 
-		if (!email || !password) {
-			return c.text('email or password not provided', 400);
+			const { message, statusCode } = await registerUser(db, user);
+			return json({ message }, statusCode);
 		}
+	)
 
-		const existUser = !true;
+	.post(
+		'/login',
+		useDB,
+		zValidator('json', userLoginDTO),
+		async ({ var: { db }, req, json }) => {
+			const user: UserLoginDTO = await req.json();
+			const { message, statusCode } = await loginUser(db, user);
 
-		if (existUser)
-			return c.text('Ya existe un usuario con estas credenciales', 409);
-
-		const registerUser = true;
-
-		return c.text('Usuario registrado exitosamente.', 201);
-	})
-
-	.post('/login', zValidator('json', userLoginDTO), async (c) => {
-		try {
-			let { username, password } = await c.req.json();
-
-			if (!username || !password)
-				return c.text('username or password not provided.', 400);
-
-			const user = 'validate user';
-
-			if (!user) return c.text('Invalid Credentials', 400);
-
-			const token = { id: 'uno ahi', username };
-
-			return c.json({ token }, 200);
-		} catch (error) {
-			console.error(error);
-			return c.text('Internal Server Error', 500);
+			return json({ message }, statusCode);
 		}
-	});
+	);

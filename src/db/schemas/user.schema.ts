@@ -1,24 +1,16 @@
 import { relations, sql } from 'drizzle-orm';
-import { sqliteTable, text } from 'drizzle-orm/sqlite-core';
-import { v7 as randomUUIDv7 } from 'uuid';
+import { integer, sqliteTable, text } from 'drizzle-orm/sqlite-core';
+import { password, randomUUIDv7 } from 'bun';
+import { notesTable } from './notes.schema';
 
 // Tables
 export const usersTable = sqliteTable('users', {
 	id: text()
 		.primaryKey()
 		.$defaultFn(() => randomUUIDv7()),
-	username: text().notNull(),
-	email: text().notNull().unique(),
-	created: text().default(sql`(CURRENT_DATE)`),
-});
-
-export const notesTable = sqliteTable('notes', {
-	id: text()
-		.primaryKey()
-		.$defaultFn(() => randomUUIDv7()),
-	title: text({ length: 70 }).notNull(),
-	description: text({ length: 1000 }),
-	userId: text().references(() => usersTable.id),
+	username: text({ length: 16 }).notNull().unique(),
+	password: text({ length: 26 }).notNull(),
+	admin: integer({ mode: 'boolean' }).default(false),
 	created: text().default(sql`(CURRENT_DATE)`),
 });
 

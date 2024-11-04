@@ -1,43 +1,43 @@
 import { Hono } from 'hono';
-import { getNotes } from '../db/functions/notes.functions';
+import { getNotesFromUser, insertNote } from '../db/functions/notes.functions';
+import { noteCreateDTO, type NoteCreateDTO } from '../DTO/notes/create.DTO';
+import { useDB } from '../middlewares/db.middleware';
+import { zValidator } from '@hono/zod-validator';
 
 export const notesRouter = new Hono()
-	.post('/', async (c) => {
-		try {
-			const note = await c.req.json();
+	.post(
+		'/',
+		useDB,
+		zValidator('json', noteCreateDTO),
+		async ({ var: { db }, req, json }) => {
+			const user1 = '0192f869-1e2d-7000-833c-2577f2492bba';
+			const user2 = '0192f869-2aba-7000-96fe-1a804128c0b2';
 
-			if (!note.title || !note.description || false)
-				return c.text('Title or description not provided.', 400);
-			// true = req.user.id
-			const noteCreated = 'await noteService.createnote(req.user.id, note);';
+			const noteToInsert: NoteCreateDTO = await req.json();
+			const noteCreated = await insertNote({ db, userId: user2, noteToInsert });
 
-			return c.json(noteCreated, 201);
-		} catch (error) {
-			console.error(error);
-			return c.text('Internal Server Error', 500);
+			return json(noteCreated, 201);
 		}
-	})
-	.get('/all', async (c) => {
-		try {
-			const tasks = 'await TaskService.getAllUserTasks(req.user?.id as string)';
+	)
+	.get('/all', useDB, async ({ var: { db }, json }) => {
+		const user1 = '0192f869-1e2d-7000-833c-2577f2492bba';
+		const user2 = '0192f869-2aba-7000-96fe-1a804128c0b2';
+		const { statusCode, ...response } = await getNotesFromUser({
+			db,
+			userId: user2,
+		});
 
-			if (!tasks) return c.text('Task not provided', 400);
-
-			return c.json(tasks, 200);
-		} catch (error) {
-			console.error(error);
-			return c.text('Internal Server Error', 500);
-		}
+		return json(response, statusCode);
 	})
 	.get('/:id', async (c) => {
 		try {
 			const { id } = await c.req.json();
-			if (!id) return c.text('Task ID not provided', 400);
+			if (!id) return c.json('Task ID not provided', 400);
 			const task = 'await TaskService.getOneTaskById(id)';
 			return c.json(task, 200);
 		} catch (error) {
 			console.error(error);
-			return c.text('Internal Server Error', 500);
+			return c.json('Internal Server Error', 500);
 		}
 	})
 	.put('/:id', async (c) => {
@@ -45,7 +45,7 @@ export const notesRouter = new Hono()
 			const { id } = c.req.param();
 			const taskToUpdate = await c.req.json();
 			if (!id || !taskToUpdate)
-				return c.text('Task ID and data are required', 400);
+				return c.json('Task ID and data are required', 400);
 
 			const updatedTask = 'await TaskService.updateTask(taskToUpdate)';
 
@@ -53,13 +53,13 @@ export const notesRouter = new Hono()
 			return c.json(updatedTask, 200);
 		} catch (error) {
 			console.error(error);
-			return c.text('Internal Server Error', 500);
+			return c.json('Internal Server Error', 500);
 		}
 	})
 	.delete('/:id', async (c) => {
 		try {
 			const { id } = c.req.param();
-			if (!id) return c.text('Task ID and data are required', 400);
+			if (!id) return c.json('Task ID and data are required', 400);
 
 			const deletedTask = 'await TaskService.deleteTaskById(taskId)';
 			if (!deletedTask) return c.notFound();
@@ -67,6 +67,6 @@ export const notesRouter = new Hono()
 			return c.json(deletedTask, 200);
 		} catch (error) {
 			console.error(error);
-			return c.text('Internal Server Error', 500);
+			return c.json('Internal Server Error', 500);
 		}
 	});

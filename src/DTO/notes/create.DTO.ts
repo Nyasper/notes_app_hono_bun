@@ -1,8 +1,11 @@
 import { z } from 'zod';
+import { NoteDTOConsts } from './validationConstants';
 
-export const createNoteDTO = z.object({
-	title: z.string().min(2).max(70),
-	description: z.string().max(1000).optional(),
+const { title, description } = NoteDTOConsts;
+
+export const noteCreateDTO = z.object({
+	title: z.string().min(title.min).max(title.max),
+	description: z.string().max(description.max).default(description.default),
 });
 
-export type createNoteDTO = z.infer<typeof createNoteDTO>;
+export type NoteCreateDTO = z.infer<typeof noteCreateDTO>;

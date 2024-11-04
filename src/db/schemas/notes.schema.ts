@@ -1,6 +1,6 @@
 import { sqliteTable, text } from 'drizzle-orm/sqlite-core';
 import { relations } from 'drizzle-orm';
-import { v7 as randomUUIDv7 } from 'uuid';
+import { randomUUIDv7 } from 'bun';
 import { usersTable } from './user.schema';
 
 export const notesTable = sqliteTable('notes', {

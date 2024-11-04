@@ -4,14 +4,9 @@ import { getUsers } from '../../db/functions/admin.functions';
 
 export const adminUsersRouter = new Hono()
 	.get('/all', useDB, async (c) => {
-		try {
-			const users = getUsers(c.var.db);
+		const { statusCode, ...response } = await getUsers(c.var.db);
 
-			return c.json(users, 200);
-		} catch (error) {
-			console.error('Error al registrar usuario:', error);
-			return c.text('Internal Server Error', 500);
-		}
+		return c.json(response, statusCode);
 	})
 	.get('/:username', async (c) => {
 		try {

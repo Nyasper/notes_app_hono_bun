@@ -1,8 +1,8 @@
 import { z } from 'zod';
 
-export const updateNoteDTO = z.object({
-	username: z.string().length(4),
-	password: z.string().length(8),
+export const noteUpdateDTO = z.object({
+	title: z.string().min(2).max(70),
+	description: z.string().length(8),
 });
 
-export type UpdateNoteDTO = z.infer<typeof updateNoteDTO>;
+export type NoteUpdateDTO = z.infer<typeof noteUpdateDTO>;

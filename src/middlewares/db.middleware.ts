@@ -28,8 +28,4 @@ interface Env extends Context {
 			$client: Database;
 		};
 	};
-	Bindings: {
-		TURSO_DATABASE_URL: string;
-		TURSO_AUTH_TOKEN: string;
-	};
 }
