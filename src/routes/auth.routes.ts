@@ -12,43 +12,31 @@ import { setCookie } from 'hono/cookie';
 export const authRouter = new Hono()
 	.post(
 		'/register',
-		useDB,
 		zValidator('json', userRegisterDTO),
+		useDB,
 
 		async ({ var: { db }, req, json }) => {
 			const user: UserRegisterDTO = await req.json();
 
-			const { message, statusCode } = await registerUser(db, user);
+			const { message, statusCode } = await registerUser({ db, user });
 			return json({ message }, statusCode);
 		}
 	)
-	.post(
-		'/login',
-		useDB,
-		zValidator('json', userLoginDTO),
+	.post('/login', zValidator('json', userLoginDTO), useDB, async (c) => {
+		const user: UserLoginDTO = await c.req.json();
+		c.env.JWT_SECRET = process.env.JWT_SECRET;
+		const db = c.var.db;
 
-		async (c) => {
-			const user: UserLoginDTO = await c.req.json();
-			c.env.JWT_SECRET = process.env.JWT_SECRET;
-			const db = c.var.db;
-
-			const tokenSecret = c.env.JWT_SECRET;
-			const { statusCode, token, ...response } = await loginUser({
-				db,
-				user,
-				tokenSecret,
-			});
-			setCookie(c, 'token', token!, {
-				httpOnly: true,
-				sameSite: 'none',
-				secure: true,
-			});
-			return c.json({ response }, statusCode);
-		}
-	)
-	.get('/logout', (c) => {
-		return c.text('logout');
-	})
-	.get('refresh', (c) => {
-		return c.text('refresh');
+		const tokenSecret = c.env.JWT_SECRET;
+		const { statusCode, token, ...response } = await loginUser({
+			db,
+			user,
+			tokenSecret,
+		});
+		setCookie(c, 'token', token!, {
+			httpOnly: true,
+			sameSite: 'none',
+			secure: true,
+		});
+		return c.json({ response }, statusCode);
 	});

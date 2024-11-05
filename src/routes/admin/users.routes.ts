@@ -1,36 +1,26 @@
 import { Hono } from 'hono';
 import { useDB } from '../../middlewares/db.middleware';
-import { getUsers } from '../../db/functions/admin.functions';
+import {
+	deleteUser,
+	getUser,
+	getUsers,
+} from '../../db/functions/admin.functions';
 
 export const adminUsersRouter = new Hono()
-	.get('/all', useDB, async (c) => {
-		const { statusCode, ...response } = await getUsers(c.var.db);
+	.get('/all', useDB, async ({ var: { db }, json }) => {
+		const { statusCode, ...response } = await getUsers(db);
 
-		return c.json(response.users, statusCode);
+		return json(response, statusCode);
 	})
-	.get('/:username', async (c) => {
-		try {
-			const { username } = await c.req.json();
-			const user = 'get userById()';
+	.get('/:userId', useDB, async ({ req, var: { db }, json }) => {
+		const { userId } = req.param();
+		const { statusCode, ...response } = await getUser({ db, userId });
 
-			if (!user) return c.text('Username Doesnt exists', 400);
-		} catch (error) {
-			console.error(error);
-			return c.text('Internal Server Error', 500);
-		}
+		return json(response, statusCode);
 	})
-	.delete('/:userId', async (c) => {
-		try {
-			const { userId } = await c.req.json();
-			const deleted = 'await deleteUser()';
+	.delete('/:userId', useDB, async ({ req, var: { db }, json }) => {
+		const { userId } = req.param();
+		const { statusCode, ...response } = await deleteUser({ db, userId });
 
-			if (!deleted) {
-				return c.notFound();
-			}
-
-			return c.text('User deleted succefully', 200);
-		} catch (error) {
-			console.error(error);
-			return c.text('Internal Server Error', 500);
-		}
+		return json(response);
 	});

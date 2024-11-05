@@ -4,14 +4,14 @@ import { UserRegisterDTO } from '../../DTO/user/register.DTO';
 import { eq } from 'drizzle-orm';
 import { UserLoginDTO } from '../../DTO/user/login.DTO';
 import { password } from 'bun';
-import type { CommonResponse } from './common.types';
+import type { ResponseWithMessage } from './responses.types';
 import { sign as JwtSign } from 'hono/jwt';
 import { JWTPayload } from 'hono/utils/jwt/types';
 
-export async function registerUser(
-	db: DbContext,
-	user: UserRegisterDTO
-): Promise<CommonResponse> {
+export async function registerUser({
+	db,
+	user,
+}: RegisterUser): Promise<ResponseWithMessage> {
 	try {
 		const [existingUser] = await db
 			.select()
@@ -94,7 +94,7 @@ export async function loginUser({
 	}
 }
 
-export async function generateToken(user: UserTypeS, jwt_secret: string) {
+async function generateToken(user: UserTypeS, jwt_secret: string) {
 	const payload: JWTPayload = {
 		id: user.id,
 		username: user.username,
@@ -110,17 +110,17 @@ export interface JwtCustomPayload extends JWTPayload {
 	admin: boolean;
 }
 
-interface LoginResponse extends CommonResponse {
+interface LoginResponse extends ResponseWithMessage {
 	token: string | null;
+}
+
+interface RegisterUser {
+	db: DbContext;
+	user: UserRegisterDTO;
 }
 
 interface LoginUser {
 	db: DbContext;
 	user: UserLoginDTO;
 	tokenSecret: string;
-}
-
-interface GetUser {
-	db: DbContext;
-	userId: string;
 }

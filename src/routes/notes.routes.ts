@@ -1,22 +1,30 @@
 import { Hono } from 'hono';
-import { getNotesFromUser, insertNote } from '../db/functions/notes.functions';
+import {
+	deleteNote,
+	getNote,
+	getNotesFromUser,
+	insertNote,
+	updateNote,
+} from '../db/functions/notes.functions';
 import { noteCreateDTO, type NoteCreateDTO } from '../DTO/notes/create.DTO';
 import { useDB } from '../middlewares/db.middleware';
 import { zValidator } from '@hono/zod-validator';
 import { requireAuth } from '../middlewares/auth.middleware';
-
-const user1 = '0192f982-3e36-7000-878d-7c0c9870ef29';
-const user2 = '0192f982-45b4-7000-9a11-36df24799bbe';
+import { NoteUpdateDTO, noteUpdateDTO } from '../DTO/notes/update.DTO';
 
 export const notesRouter = new Hono()
 	.use('/*', requireAuth)
 	.post(
 		'/',
-		useDB,
 		zValidator('json', noteCreateDTO),
-		async ({ var: { db }, req, json }) => {
+		useDB,
+		async ({ var: { db, userPayload }, req, json }) => {
 			const noteToInsert: NoteCreateDTO = await req.json();
-			const noteCreated = await insertNote({ db, userId: user2, noteToInsert });
+			const noteCreated = await insertNote({
+				db,
+				userId: userPayload.id,
+				noteToInsert,
+			});
 
 			return json(noteCreated, 201);
 		}
@@ -29,44 +37,27 @@ export const notesRouter = new Hono()
 
 		return json(response, statusCode);
 	})
-	.get('/:id', async (c) => {
-		try {
-			const { id } = await c.req.json();
-			if (!id) return c.json('Task ID not provided', 400);
-			const task = 'await TaskService.getOneTaskById(id)';
-			return c.json(task, 200);
-		} catch (error) {
-			console.error(error);
-			return c.json('Internal Server Error', 500);
-		}
+	.get('/:id', useDB, async ({ req, var: { db }, json }) => {
+		const { id } = req.param();
+		const { statusCode, ...response } = await getNote({ db, id });
+
+		return json(response, statusCode);
 	})
-	.put('/:id', async (c) => {
-		try {
-			const { id } = c.req.param();
-			const taskToUpdate = await c.req.json();
-			if (!id || !taskToUpdate)
-				return c.json('Task ID and data are required', 400);
+	.put(
+		'/:id',
+		zValidator('json', noteUpdateDTO),
+		useDB,
+		async ({ req, var: { db }, json }) => {
+			const { id } = req.param();
+			const note: NoteUpdateDTO = await req.json();
+			const { statusCode, ...response } = await updateNote({ db, id, note });
 
-			const updatedTask = 'await TaskService.updateTask(taskToUpdate)';
-
-			if (!updatedTask) return c.notFound();
-			return c.json(updatedTask, 200);
-		} catch (error) {
-			console.error(error);
-			return c.json('Internal Server Error', 500);
+			return json(response, statusCode);
 		}
-	})
-	.delete('/:id', async (c) => {
-		try {
-			const { id } = c.req.param();
-			if (!id) return c.json('Task ID and data are required', 400);
+	)
+	.delete('/:id', useDB, async ({ req, var: { db }, json }) => {
+		const { id } = req.param();
+		const { statusCode, ...response } = await deleteNote({ db, id });
 
-			const deletedTask = 'await TaskService.deleteTaskById(taskId)';
-			if (!deletedTask) return c.notFound();
-
-			return c.json(deletedTask, 200);
-		} catch (error) {
-			console.error(error);
-			return c.json('Internal Server Error', 500);
-		}
+		return json(response, statusCode);
 	});
