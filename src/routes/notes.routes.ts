@@ -1,5 +1,6 @@
 import { Hono } from 'hono';
 import {
+	deleteAllNotes,
 	deleteNote,
 	getNote,
 	getNotesFromUser,
@@ -55,6 +56,12 @@ export const notesRouter = new Hono()
 			return json(response, statusCode);
 		}
 	)
+	.delete('/all', useDB, async ({ var: { db, userPayload }, json }) => {
+		const userId = userPayload.id;
+		const { statusCode, ...response } = await deleteAllNotes({ db, userId });
+
+		return json(response, statusCode);
+	})
 	.delete('/:id', useDB, async ({ req, var: { db }, json }) => {
 		const { id } = req.param();
 		const { statusCode, ...response } = await deleteNote({ db, id });

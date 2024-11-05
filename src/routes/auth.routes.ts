@@ -7,7 +7,7 @@ import {
 } from '../DTO/user/register.DTO';
 import { loginUser, registerUser } from '../db/functions/users.function';
 import { useDB } from '../middlewares/db.middleware';
-import { setCookie } from 'hono/cookie';
+import { setCookie, deleteCookie } from 'hono/cookie';
 
 export const authRouter = new Hono()
 	.post(
@@ -18,8 +18,8 @@ export const authRouter = new Hono()
 		async ({ var: { db }, req, json }) => {
 			const user: UserRegisterDTO = await req.json();
 
-			const { message, statusCode } = await registerUser({ db, user });
-			return json({ message }, statusCode);
+			const { statusCode, ...response } = await registerUser({ db, user });
+			return json(response, statusCode);
 		}
 	)
 	.post('/login', zValidator('json', userLoginDTO), useDB, async (c) => {
@@ -39,4 +39,8 @@ export const authRouter = new Hono()
 			secure: true,
 		});
 		return c.json({ response }, statusCode);
+	})
+	.post('/logout', async (c) => {
+		deleteCookie(c, 'token');
+		return c.json({ sucess: true, message: 'user logout succesfully' }, 200);
 	});

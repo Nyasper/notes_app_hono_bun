@@ -46,7 +46,7 @@ export async function getNotesFromUser({
 
 		return {
 			success: true,
-			message: `${notes.length} notes from user ${notes[0].userId}`,
+			message: `${notes.length}  note(s) found`,
 			statusCode: 200,
 			data: notes,
 		};
@@ -65,8 +65,7 @@ export async function getNote({
 		const [note] = await db
 			.select()
 			.from(notesTable)
-			.where(eq(notesTable.id, id))
-			.limit(1);
+			.where(eq(notesTable.id, id));
 
 		if (!note)
 			return { success: false, message: "Note doesn't exist", statusCode: 404 };
@@ -94,7 +93,6 @@ export async function updateNote({
 			.update(notesTable)
 			.set(note)
 			.where(eq(notesTable.id, id))
-			.limit(1)
 			.returning();
 
 		if (!updatedNote)
@@ -125,7 +123,6 @@ export async function deleteNote({
 		const [deletedNote] = await db
 			.delete(notesTable)
 			.where(eq(notesTable.id, id))
-			.limit(1)
 			.returning();
 
 		if (!deletedNote)
@@ -138,6 +135,25 @@ export async function deleteNote({
 		};
 	} catch (error) {
 		const message = 'Error on trying to delete note';
+		console.error(message, error);
+		return { success: false, message, statusCode: 500 };
+	}
+}
+
+export async function deleteAllNotes({
+	db,
+	userId,
+}: DeleteAllNotes): Promise<ResponseWithMessage> {
+	try {
+		await db.delete(notesTable).where(eq(notesTable.userId, userId));
+
+		return {
+			success: true,
+			message: 'Notes deleted successfully',
+			statusCode: 200,
+		};
+	} catch (error) {
+		const message = 'Error on trying to delete notes';
 		console.error(message, error);
 		return { success: false, message, statusCode: 500 };
 	}
@@ -168,4 +184,9 @@ interface UpdateNote {
 interface DeleteNote {
 	db: DbContext;
 	id: string;
+}
+
+interface DeleteAllNotes {
+	db: DbContext;
+	userId: string;
 }

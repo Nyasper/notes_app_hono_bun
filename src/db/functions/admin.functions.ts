@@ -1,4 +1,4 @@
-import { eq } from 'drizzle-orm';
+import { and, eq, ne } from 'drizzle-orm';
 import type { DbContext } from '../../middlewares/db.middleware';
 import { UserTypeS } from '../schema/user';
 import type { ResponseWithData, ResponseWithMessage } from './responses.types';
@@ -64,7 +64,18 @@ export async function deleteUser({
 	userId,
 }: DeleteUser): Promise<ResponseWithMessage> {
 	try {
-		await db.delete(usersTable).where(eq(usersTable.id, userId)).limit(1);
+		const [deletedUser] = await db
+			.delete(usersTable)
+			.where(and(eq(usersTable.id, userId), ne(usersTable.admin, true)))
+			.returning();
+
+		if (!deletedUser)
+			return {
+				success: false,
+				message: 'User not found or is an Admin',
+				statusCode: 404,
+			};
+
 		return {
 			success: true,
 			message: 'User deleted successfully',
