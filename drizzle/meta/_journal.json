@@ -1,0 +1,41 @@
+{
+  "version": "7",
+  "dialect": "sqlite",
+  "entries": [
+    {
+      "idx": 0,
+      "version": "6",
+      "when": 1730757800623,
+      "tag": "0000_elite_stick",
+      "breakpoints": true
+    },
+    {
+      "idx": 1,
+      "version": "6",
+      "when": 1730761853845,
+      "tag": "0001_keen_thundra",
+      "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "6",
+      "when": 1730762859772,
+      "tag": "0002_jazzy_thunderball",
+      "breakpoints": true
+    },
+    {
+      "idx": 3,
+      "version": "6",
+      "when": 1730762872997,
+      "tag": "0003_pretty_nextwave",
+      "breakpoints": true
+    },
+    {
+      "idx": 4,
+      "version": "6",
+      "when": 1730762878017,
+      "tag": "0004_tearful_eternity",
+      "breakpoints": true
+    }
+  ]
+}

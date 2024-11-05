@@ -1,6 +1,6 @@
 import type { DbContext } from '../../middlewares/db.middleware';
-import { notesTable } from '../schemas/notes.schema';
-import { type notesTypeS } from '../schemas/notes.schema';
+import { notes as notesTable } from '../schema/notes';
+import { type NotesTypeS } from '../schema/notes';
 import { eq } from 'drizzle-orm';
 import type { NoteCreateDTO } from '../../DTO/notes/create.DTO';
 import type { CommonResponse } from './common.types';
@@ -20,12 +20,12 @@ export async function insertNote({
 
 		return {
 			success: true,
-			message: 'Note created successfully.',
+			message: 'Note created successfully',
 			statusCode: 201,
 			note,
 		};
 	} catch (error) {
-		const message = 'Error trying to insert note.';
+		const message = 'Error trying to insert note';
 		console.error(message, error);
 		return {
 			success: false,
@@ -49,9 +49,9 @@ export async function getNotesFromUser({
 		if (notes.length === 0)
 			return {
 				success: false,
-				message: 'No notes found.',
+				message: 'No notes found',
 				statusCode: 404,
-				notes: null,
+				notes: [],
 			};
 
 		return {
@@ -61,9 +61,9 @@ export async function getNotesFromUser({
 			notes,
 		};
 	} catch (error) {
-		const message = 'Error trying to get notes.';
+		const message = 'Error trying to get notes';
 		console.error(message, error);
-		return { success: false, message, statusCode: 500, notes: null };
+		return { success: false, message, statusCode: 500, notes: [] };
 	}
 }
 
@@ -79,9 +79,9 @@ interface GetNotes {
 }
 
 interface CreateNoteStatus extends CommonResponse {
-	note: notesTypeS | null;
+	note: NotesTypeS | null;
 }
 
 interface GetNotesStatus extends CommonResponse {
-	notes: notesTypeS[] | null;
+	notes: NotesTypeS[];
 }

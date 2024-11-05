@@ -1,16 +1,15 @@
 import { createMiddleware } from 'hono/factory';
 import { BunSQLiteDatabase, drizzle } from 'drizzle-orm/bun-sqlite';
-import { Context } from 'hono';
 import { Database } from 'bun:sqlite';
+import schema from '../db/schema/index';
 
 let db: DbContext | null = null;
-
 // inyect DBcontext in the hono controller
-export const useDB = createMiddleware<Env>(async (c, next) => {
-	// Initialize DB
+export const useDB = createMiddleware<ContextExtended>(async (c, next) => {
 	if (!db) {
+		// Initialize DB once
 		const client = new Database(process.env.DB_FILE_NAME!);
-		db = drizzle({ client });
+		db = drizzle({ client, schema });
 		console.log('Data Base Conected');
 	}
 
@@ -18,14 +17,15 @@ export const useDB = createMiddleware<Env>(async (c, next) => {
 	return await next();
 });
 
-export type DbContext = BunSQLiteDatabase<Record<string, never>> & {
-	$client: Database;
-};
+export type DbContext = BunSQLiteDatabase<typeof schema>;
 
-interface Env extends Context {
+export interface ContextExtended {
 	Variables: {
-		db: BunSQLiteDatabase<Record<string, never>> & {
-			$client: Database;
-		};
+		db: DbContext;
+	};
+	Bindings: {
+		TURSO_DATABASE_URL: string;
+		TURSO_AUTH_TOKEN: string;
+		JWT_SECRET: string;
 	};
 }

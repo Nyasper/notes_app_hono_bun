@@ -1,25 +1,27 @@
-import { usersTable, type userTypeS } from '../schemas/user.schema';
+import { users as usersTable, type UserTypeS } from '../schema/user';
 import type { DbContext } from '../../middlewares/db.middleware';
 import { UserRegisterDTO } from '../../DTO/user/register.DTO';
 import { eq } from 'drizzle-orm';
 import { UserLoginDTO } from '../../DTO/user/login.DTO';
 import { password } from 'bun';
 import type { CommonResponse } from './common.types';
+import { sign as JwtSign } from 'hono/jwt';
+import { JWTPayload } from 'hono/utils/jwt/types';
 
 export async function registerUser(
 	db: DbContext,
 	user: UserRegisterDTO
 ): Promise<CommonResponse> {
 	try {
-		const existingUser = await db
+		const [existingUser] = await db
 			.select()
 			.from(usersTable)
 			.where(eq(usersTable.username, user.username));
 
-		if (existingUser.length > 0)
+		if (existingUser)
 			return {
 				success: false,
-				message: 'User alredy exists.',
+				message: 'User alredy exists',
 				statusCode: 409,
 			};
 
@@ -27,7 +29,7 @@ export async function registerUser(
 		await db.insert(usersTable).values(user);
 		return {
 			success: true,
-			message: 'User registered successfully.',
+			message: 'User registered successfully',
 			statusCode: 201,
 		};
 	} catch (error) {
@@ -37,53 +39,85 @@ export async function registerUser(
 	}
 }
 
-export async function loginUser(
-	db: DbContext,
-	user: UserLoginDTO
-): Promise<CommonResponse> {
+export async function loginUser({
+	db,
+	user,
+	tokenSecret,
+}: LoginUser): Promise<LoginResponse> {
 	try {
-		const existingUser = await db
+		const [existingUser] = await db
 			.select()
 			.from(usersTable)
 			.where(eq(usersTable.username, user.username));
 
-		if (existingUser.length === 0) {
-			return { success: false, message: 'User not found.', statusCode: 404 };
+		if (!existingUser) {
+			return {
+				success: false,
+				message: 'User not found',
+				statusCode: 404,
+				token: null,
+			};
 		}
 
 		const isPasswordValid: boolean = await password.verify(
 			user.password,
-			existingUser[0].password,
+			existingUser.password,
 			'bcrypt'
 		);
 
 		if (!isPasswordValid) {
 			return {
 				success: false,
-				message: 'Incorrect password.',
+				message: 'Incorrect password',
 				statusCode: 401,
+				token: null,
 			};
 		}
 
+		const token = await generateToken(existingUser, tokenSecret);
+
 		return {
 			success: true,
-			message: 'User logged successfully.',
+			message: 'User logged successfully',
 			statusCode: 200,
+			token,
 		};
 	} catch (error) {
-		const message = 'Error on login user.';
+		const message = 'Error on login user';
 		console.error(message, error);
 		return {
 			success: false,
 			message,
 			statusCode: 500,
+			token: null,
 		};
 	}
 }
 
-export async function getUser({ db, userId }: GetUser): Promise<userTypeS[]> {
-	const user = await db.select().from(usersTable);
-	return user;
+export async function generateToken(user: UserTypeS, jwt_secret: string) {
+	const payload: JWTPayload = {
+		id: user.id,
+		username: user.username,
+		admin: user.admin ?? false,
+		exp: Math.floor(Date.now() / 1000) + 60 * 60 * 24 * 14, // expires in two weeks
+	};
+	return await JwtSign(payload, jwt_secret);
+}
+
+export interface JwtCustomPayload extends JWTPayload {
+	id: string;
+	username: string;
+	admin: boolean;
+}
+
+interface LoginResponse extends CommonResponse {
+	token: string | null;
+}
+
+interface LoginUser {
+	db: DbContext;
+	user: UserLoginDTO;
+	tokenSecret: string;
 }
 
 interface GetUser {

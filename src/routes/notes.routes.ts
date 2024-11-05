@@ -3,28 +3,28 @@ import { getNotesFromUser, insertNote } from '../db/functions/notes.functions';
 import { noteCreateDTO, type NoteCreateDTO } from '../DTO/notes/create.DTO';
 import { useDB } from '../middlewares/db.middleware';
 import { zValidator } from '@hono/zod-validator';
+import { requireAuth } from '../middlewares/auth.middleware';
+
+const user1 = '0192f982-3e36-7000-878d-7c0c9870ef29';
+const user2 = '0192f982-45b4-7000-9a11-36df24799bbe';
 
 export const notesRouter = new Hono()
+	.use('/*', requireAuth)
 	.post(
 		'/',
 		useDB,
 		zValidator('json', noteCreateDTO),
 		async ({ var: { db }, req, json }) => {
-			const user1 = '0192f869-1e2d-7000-833c-2577f2492bba';
-			const user2 = '0192f869-2aba-7000-96fe-1a804128c0b2';
-
 			const noteToInsert: NoteCreateDTO = await req.json();
 			const noteCreated = await insertNote({ db, userId: user2, noteToInsert });
 
 			return json(noteCreated, 201);
 		}
 	)
-	.get('/all', useDB, async ({ var: { db }, json }) => {
-		const user1 = '0192f869-1e2d-7000-833c-2577f2492bba';
-		const user2 = '0192f869-2aba-7000-96fe-1a804128c0b2';
+	.get('/all', useDB, async ({ var: { db, userPayload }, json }) => {
 		const { statusCode, ...response } = await getNotesFromUser({
 			db,
-			userId: user2,
+			userId: userPayload.id,
 		});
 
 		return json(response, statusCode);

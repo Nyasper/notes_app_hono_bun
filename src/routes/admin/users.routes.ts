@@ -6,7 +6,7 @@ export const adminUsersRouter = new Hono()
 	.get('/all', useDB, async (c) => {
 		const { statusCode, ...response } = await getUsers(c.var.db);
 
-		return c.json(response, statusCode);
+		return c.json(response.users, statusCode);
 	})
 	.get('/:username', async (c) => {
 		try {

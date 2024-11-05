@@ -1,43 +1,37 @@
 import { createMiddleware } from 'hono/factory';
+import { verify as JwtVerify } from 'hono/jwt';
+import { JwtCustomPayload } from '../db/functions/users.function';
+import { getCookie } from 'hono/cookie';
 
-export const useAuth = createMiddleware(async (c, next) => {
+export const requireAuth = createMiddleware<JwtContext>(async (c, next) => {
+	c.env.JWT_SECRET = process.env.JWT_SECRET;
+
+	// const token = c.req.header('Authorization');
+	const token = getCookie(c, 'token');
+	console.log({ tokenCookie: token });
+	if (!token) {
+		return c.json('No token provided', 401);
+	}
+
 	try {
-		const token = c.req.header('Authorization');
+		const payload = (await JwtVerify(
+			token,
+			c.env.JWT_SECRET
+		)) as JwtCustomPayload;
 
-		if (!token || !token.startsWith('Bearer ')) {
-			return c.json({ message: 'Token de acceso no proporcionado' }, 201);
-		}
-		const tokenWithoutBearer = token.split(' ')[1];
-		const decoded = 'UserService.validateToken(tokenWithoutBearer)';
-		('req.user = decoded');
-		await next();
-	} catch (error: any) {
-		if (error.name === 'TokenExpiredError') {
-			return c.json({ message: 'Token expirado' }, 401);
-		}
-		return c.json({ message: 'Token de acceso inválido' }, 401);
+		c.set('userPayload', payload);
+		return await next();
+	} catch (error) {
+		console.error('Token verification failed:', error);
+		return c.json({ success: false, message: 'Invalid token' }, 401);
 	}
 });
 
-export const useAuthAdmin = createMiddleware(async (c, next) => {
-	try {
-		const token = c.req.header('Authorization');
-
-		if (!token || !token.startsWith('Bearer '))
-			return c.json({ message: 'Token de acceso no proporcionado' }, 401);
-
-		const tokenWithoutBearer = token.split(' ')[1];
-		const decoded: any = 'UserService.validateToken(tokenWithoutBearer)';
-
-		if (!decoded || !decoded.admin)
-			return c.json({ message: 'Acceso no autorizado' }, 403);
-		// req.user = decoded;
-		// c.var.user = decoded;
-		next();
-	} catch (error: any) {
-		if (error.name === 'TokenExpiredError') {
-			return c.json({ message: 'Token expirado' }, 401);
-		}
-		return c.json({ message: 'Token de acceso inválido' }, 401);
-	}
-});
+interface JwtContext {
+	Variables: {
+		userPayload: JwtCustomPayload;
+	};
+	Bindings: {
+		JWT_SECRET: string;
+	};
+}
