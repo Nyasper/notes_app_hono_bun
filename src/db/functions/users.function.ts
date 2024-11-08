@@ -95,7 +95,7 @@ export async function loginUser({
 }
 
 async function generateToken(user: UserTypeS, jwt_secret: string) {
-	const payload: JWTPayload = {
+	const payload: JwtCustomPayload = {
 		id: user.id,
 		username: user.username,
 		admin: user.admin ?? false,
@@ -108,6 +108,7 @@ export interface JwtCustomPayload extends JWTPayload {
 	id: string;
 	username: string;
 	admin: boolean;
+	exp: number;
 }
 
 interface LoginResponse extends ResponseWithMessage {

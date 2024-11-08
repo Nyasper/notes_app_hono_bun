@@ -8,6 +8,7 @@ import {
 import { loginUser, registerUser } from '../db/functions/users.function';
 import { useDB } from '../middlewares/db.middleware';
 import { setCookie, deleteCookie } from 'hono/cookie';
+import { requireAuth } from '../middlewares/auth.middleware';
 
 export const authRouter = new Hono()
 	.post(
@@ -39,6 +40,12 @@ export const authRouter = new Hono()
 			secure: true,
 		});
 		return c.json({ response }, statusCode);
+	})
+	.get('/info', requireAuth, async ({ var: { userPayload }, json }) => {
+		return json(
+			{ success: true, message: 'user info provided', data: userPayload },
+			200
+		);
 	})
 	.post('/logout', async (c) => {
 		deleteCookie(c, 'token');

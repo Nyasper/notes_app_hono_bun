@@ -13,7 +13,7 @@ export const notes = sqliteTable('notes', {
 		onDelete: 'cascade',
 		onUpdate: 'cascade',
 	}),
-	created: text().default(new Date().toString()),
+	created: text().$defaultFn(() => generateTodayDateFormatted()),
 });
 
 export const notesRelations = relations(notes, ({ one }) => ({
@@ -25,3 +25,12 @@ export const notesRelations = relations(notes, ({ one }) => ({
 
 export type NotesTypeS = typeof notes.$inferSelect;
 export type NotesTypeI = typeof notes.$inferInsert;
+
+export function generateTodayDateFormatted(): string {
+	const today = new Date();
+	const dd = String(today.getDate()).padStart(2, '0');
+	const mm = String(today.getMonth() + 1).padStart(2, '0');
+	const yyyy = today.getFullYear();
+	// today = mm + '-' + dd + '-' + yyyy;
+	return [yyyy, mm, dd].join('-');
+}

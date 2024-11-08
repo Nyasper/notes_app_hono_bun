@@ -5,6 +5,7 @@ import { eq } from 'drizzle-orm';
 import type { NoteCreateDTO } from '../../DTO/notes/create.DTO';
 import type { ResponseWithData, ResponseWithMessage } from './responses.types';
 import { NoteUpdateDTO } from '../../DTO/notes/update.DTO';
+import { generateTodayDateFormatted } from '../schema/notes';
 
 export async function insertNote({
 	db,
@@ -91,7 +92,7 @@ export async function updateNote({
 	try {
 		const [updatedNote] = await db
 			.update(notesTable)
-			.set(note)
+			.set({ ...note, created: generateTodayDateFormatted() })
 			.where(eq(notesTable.id, id))
 			.returning();
 
