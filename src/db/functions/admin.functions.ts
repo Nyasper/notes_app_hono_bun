@@ -6,9 +6,12 @@ import { users as usersTable } from '../schema/user';
 
 export async function getUsers(
 	db: DbContext
-): Promise<ResponseWithData<UserTypeS[]>> {
+): Promise<ResponseWithData<Omit<UserTypeS, 'password'>[]>> {
 	try {
 		const users = await db.query.users.findMany({
+			columns: {
+				password: false,
+			},
 			with: {
 				notes: true,
 			},

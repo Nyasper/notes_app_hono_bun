@@ -1,7 +1,7 @@
-import { relations, sql } from 'drizzle-orm';
+import { relations } from 'drizzle-orm';
 import { integer, sqliteTable, text } from 'drizzle-orm/sqlite-core';
 import { randomUUIDv7 } from 'bun';
-import { notes } from './notes';
+import { generateTodayDateFormatted, notes } from './notes';
 
 // Tables
 export const users = sqliteTable('users', {
@@ -11,7 +11,7 @@ export const users = sqliteTable('users', {
 	username: text({ length: 16 }).notNull().unique(),
 	password: text({ length: 26 }).notNull(),
 	admin: integer({ mode: 'boolean' }).default(false),
-	created: text().default(sql`(CURRENT_DATE)`),
+	created: text().$defaultFn(() => generateTodayDateFormatted()),
 });
 
 export const usersRelations = relations(users, ({ many }) => ({
