@@ -39,7 +39,7 @@ export const authRouter = new Hono()
 			sameSite: 'none',
 			secure: true,
 		});
-		return c.json({ response }, statusCode);
+		return c.json(response, statusCode);
 	})
 	.get('/info', requireAuth, async ({ var: { userPayload }, json }) => {
 		return json(
